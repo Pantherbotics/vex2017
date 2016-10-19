@@ -16,19 +16,25 @@
 
 
 //------------Joystick Mappings------------
-#define joyForward Ch3
-#define JoyStrafe Ch1
-#define joyLeftTurn Ch5
-#define joyRightTurn Ch6
+#define joyForward Ch3;
+#define JoyStrafe Ch1;
+#define joyLeftTurn Ch5;
+#define joyRightTurn Ch6;
 
 //--------------Motor Inverts--------------
-#define mInvertCenterA 1
-#define mInvertCenterB 1
-#define mInvertFrontLeft 1
-#define mInvertFrontRight 1
-#define mInvertBackLeft 1
-#define mInvertBackRight 1
+// Drive
+#define mInvertCenterA 1;
+#define mInvertCenterB 1;
+#define mInvertFrontLeft 1;
+#define mInvertFrontRight 1;
+#define mInvertBackLeft 1;
+#define mInvertBackRight 1;
 
+//Intake
+#define mInvertChainA 1;
+#define mInvertChainB 1;
+#define mInvertChainC 1;
+#define mInvertChainD 1;
 
 void pre_auton()
 {
@@ -67,6 +73,13 @@ void driveOnControllerInput {
 
   //NOTE: 'Forward' on robot is oriented 'left' (90deg counterclockwise shift)
 
+}
+
+void setIntakeMotors (int speed) {
+  motor[inChainA] = speed;      
+  motor[inChainB] = speed * -1; //A and B are opposite mechanically linked by axel
+  motor[inChainC] = speed * -1; //A and C are opposite mechanically linked by gear
+  motor[inChainD] = speed;      //C and D are opposite mechanically linked by axel
 }
 
 
