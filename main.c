@@ -15,13 +15,13 @@
 #include "Vex_Competition_Includes.c"
 
 
-//------------Joystick Mappings------------
+//----------------Joystick Mappings----------------//
 #define joyForward Ch3;
 #define JoyStrafe Ch1;
 #define joyLeftTurn Ch5;
 #define joyRightTurn Ch6;
 
-//--------------Motor Inverts--------------
+//------------------Motor Inverts------------------//
 // Drive
 #define mInvertCenterA 1;
 #define mInvertCenterB 1;
@@ -35,6 +35,10 @@
 #define mInvertChainB 1;
 #define mInvertChainC 1;
 #define mInvertChainD 1;
+
+//--------------------Constants--------------------//
+const float deadzoneJoyForward = 0.5;
+const float deadzoneJoyStrafe = 0.5;
 
 void pre_auton()
 {
@@ -65,18 +69,42 @@ task usercontrol()
   }
 }
 
-void driveOnControllerInput {
+void driveOnControllerInput () {
   //Vertical Left Josystick - Forward/Back
   //Horizontal Right Joystick - Left/Right
   //Trigger Up - Fast Turn
   //Trigger Down - Slow Turn
 
-  //NOTE: 'Forward' on robot is oriented 'left' (90deg counterclockwise shift)
+  //NOTE: 'Forward' on robot is oriented 'left' in respect to motors (90deg counterclockwise shift)
+
+  int rawStr = vexRT[JoyStrafe];
+  int rawFwd = vexRT[joyForward];
+
+  //Deadzone calculations
+  if (rawStr > deadzoneJoyStrafe || rawStr < -deadzoneJoyStrafe){
+    int smthStr = rawStr;
+  }else if{
+    int smthStr = 0;
+  }
+
+  if (rawFwd > deadzoneJoyForward || rawFwd < -deadzoneJoyForward){
+    int smthFwd = rawFwd;
+  }else if{
+    int smthFwd = 0;
+  }
+
+  setDriveMotors(smthStr - smthFwd,   //FrontLeft
+                 smthStr + smthFwd,   //FrontRight
+                 smthStr - smthFwd ,  //BackLeft
+                 smthStr + smthFwd,   //BackRight
+                 smthFwd)             //Center
+
+
 
 }
 
 void setIntakeMotors (int speed) {
-  motor[inChainA] = speed;      
+  motor[inChainA] = speed;
   motor[inChainB] = speed * -1; //A and B are opposite mechanically linked by axel
   motor[inChainC] = speed * -1; //A and C are opposite mechanically linked by gear
   motor[inChainD] = speed;      //C and D are opposite mechanically linked by axel
@@ -91,11 +119,3 @@ void setDriveMotors(int fL, int fR, int bL, int bR,int cn) {
   motor[drCenterA]    = cn * mInvertCenterA;
   motor[drCenterA]    = cn * mInvertCenterB * -1;
 }
-
-
-
-
-
-
-
-
