@@ -16,29 +16,76 @@
 
 
 //----------------Joystick Mappings----------------//
-#define joyForward Ch3;
-#define JoyStrafe Ch1;
-#define joyLeftTurn Ch5;
-#define joyRightTurn Ch6;
+#define joyForward Ch3
+#define joyStrafe Ch1
+#define joyLeftTurn Ch5
+#define joyRightTurn Ch6
 
 //------------------Motor Inverts------------------//
 // Drive
-#define mInvertCenterA 1;
-#define mInvertCenterB 1;
-#define mInvertFrontLeft 1;
-#define mInvertFrontRight 1;
-#define mInvertBackLeft 1;
-#define mInvertBackRight 1;
+#define mInvertCenterA 1
+#define mInvertCenterB 1
+#define mInvertFrontLeft 1
+#define mInvertFrontRight 1
+#define mInvertBackLeft 1
+#define mInvertBackRight 1
 
 //Intake
-#define mInvertChainA 1;
-#define mInvertChainB 1;
-#define mInvertChainC 1;
-#define mInvertChainD 1;
+#define mInvertChainA 1
+#define mInvertChainB 1
+#define mInvertChainC 1
+#define mInvertChainD 1
 
 //--------------------Constants--------------------//
 const float deadzoneJoyForward = 0.5;
 const float deadzoneJoyStrafe = 0.5;
+
+void setIntakeMotors (int speed) {
+  motor[inChainA] = speed;
+  motor[inChainB] = speed * -1; //A and B are opposite mechanically linked by axel
+  motor[inChainC] = speed * -1; //A and C are opposite mechanically linked by gear
+  motor[inChainD] = speed;      //C and D are opposite mechanically linked by axel
+}
+
+void setDriveMotors(int fL, int fR, int bL, int bR,int cn) {
+  motor[drFrontRight] = fL * mInvertFrontRight;
+  motor[drFrontLeft]  = fR * mInvertFrontLeft;
+  motor[drBackLeft]   = bL * mInvertBackLeft;
+  motor[drBackRight]  = bR * mInvertBackRight;
+  motor[drCenterA]    = cn * mInvertCenterA;
+  motor[drCenterB]    = cn * mInvertCenterB * -1;
+}
+void driveOnControllerInput () {
+    //Vertical Left Josystick - Forward/Back
+    //Horizontal Right Joystick - Left/Right
+    //Trigger Up - Fast Turn
+    //Trigger Down - Slow Turn
+
+  //NOTE: 'Forward' on robot is oriented 'left' in respect to motors (90deg counterclockwise shift)
+  int rawStr = vexRT[joyStrafe];
+  int rawFwd = vexRT[joyForward];
+  int smthFwd = 0;
+  int smthStr = 0;
+
+  //Deadzone calculations
+  if (rawStr > deadzoneJoyStrafe || rawStr < -deadzoneJoyStrafe){
+    smthStr = rawStr;
+  }else{
+    smthStr = 0;
+  }
+
+  if (rawFwd > deadzoneJoyForward || rawFwd < -deadzoneJoyForward){
+    smthFwd = rawFwd;
+  }else{
+    smthFwd = 0;
+  }
+
+  setDriveMotors(smthStr - smthFwd,   //FrontLeft
+                 smthStr + smthFwd,   //FrontRight
+                 smthStr - smthFwd ,  //BackLeft
+                 smthStr + smthFwd,   //BackRight
+                 smthFwd);             //Center
+}
 
 void pre_auton()
 {
@@ -53,69 +100,15 @@ void pre_auton()
 	// bDisplayCompetitionStatusOnLcd = false;
 }
 
-task autonomous()
-{
+task autonomous(){
   // Remove this function call once you have "real" code.
   AutonomousCodePlaceholderForTesting();
 }
 
-task usercontrol()
-{
+task usercontrol(){
   // User control code here, inside the loop
 
-  while (true)
-  {
-    UserControlCodePlaceholderForTesting();
+  while (true) {
+   driveOnControllerInput ();
   }
-}
-
-void driveOnControllerInput () {
-  //Vertical Left Josystick - Forward/Back
-  //Horizontal Right Joystick - Left/Right
-  //Trigger Up - Fast Turn
-  //Trigger Down - Slow Turn
-
-  //NOTE: 'Forward' on robot is oriented 'left' in respect to motors (90deg counterclockwise shift)
-
-  int rawStr = vexRT[JoyStrafe];
-  int rawFwd = vexRT[joyForward];
-
-  //Deadzone calculations
-  if (rawStr > deadzoneJoyStrafe || rawStr < -deadzoneJoyStrafe){
-    int smthStr = rawStr;
-  }else if{
-    int smthStr = 0;
-  }
-
-  if (rawFwd > deadzoneJoyForward || rawFwd < -deadzoneJoyForward){
-    int smthFwd = rawFwd;
-  }else if{
-    int smthFwd = 0;
-  }
-
-  setDriveMotors(smthStr - smthFwd,   //FrontLeft
-                 smthStr + smthFwd,   //FrontRight
-                 smthStr - smthFwd ,  //BackLeft
-                 smthStr + smthFwd,   //BackRight
-                 smthFwd)             //Center
-
-
-
-}
-
-void setIntakeMotors (int speed) {
-  motor[inChainA] = speed;
-  motor[inChainB] = speed * -1; //A and B are opposite mechanically linked by axel
-  motor[inChainC] = speed * -1; //A and C are opposite mechanically linked by gear
-  motor[inChainD] = speed;      //C and D are opposite mechanically linked by axel
-}
-
-
-void setDriveMotors(int fL, int fR, int bL, int bR,int cn) {
-  motor[drFrontRight] = fL * mInvertFrontRight;
-  motor[drFrontLeft]  = fR * mInvertFrontLeft;
-  motor[drBackLeft]   = bL * mInvertBackLeft;
-  motor[drBackRight]  = bR * mInvertBackRight;
-  motor[drCenterA]    = cn * mInvertCenterA;
-  motor[drCenterA]    = cn * mInvertCenterB * -1;
 }
