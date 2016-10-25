@@ -18,17 +18,19 @@
 //----------------Joystick Mappings----------------//
 #define joyForward Ch3
 #define joyStrafe Ch1
-#define joyLeftTurn Ch5
-#define joyRightTurn Ch6
+#define joyLeftTurnF Btn5U
+#define joyLeftTurnS Btn5D
+#define joyRightTurnF Btn6U
+#define joyRightTurnS Btn6D
 
 //------------------Motor Inverts------------------//
 // Drive
 #define mInvertCenterA 1
 #define mInvertCenterB 1
 #define mInvertFrontLeft 1
-#define mInvertFrontRight 1
-#define mInvertBackLeft 1
-#define mInvertBackRight 1
+#define mInvertFrontRight -1
+#define mInvertBackLeft -1
+#define mInvertBackRight -1
 
 //Intake
 #define mInvertChainA 1
@@ -37,8 +39,8 @@
 #define mInvertChainD 1
 
 //--------------------Constants--------------------//
-const float deadzoneJoyForward = 0.5;
-const float deadzoneJoyStrafe = 0.5;
+const float deadzoneJoyForward = 1.5;
+const float deadzoneJoyStrafe = 1.5;
 
 void setIntakeMotors (int speed) {
   motor[inChainA] = speed;
@@ -63,7 +65,7 @@ void driveOnControllerInput () {
 
   //NOTE: 'Forward' on robot is oriented 'left' in respect to motors (90deg counterclockwise shift)
   int rawStr = vexRT[joyStrafe];
-  int rawFwd = vexRT[joyForward];
+  int rawFwd = -vexRT[joyForward];
   int smthFwd = 0;
   int smthStr = 0;
 
@@ -80,11 +82,21 @@ void driveOnControllerInput () {
     smthFwd = 0;
   }
 
-  setDriveMotors(smthStr - smthFwd,   //FrontLeft
-                 smthStr + smthFwd,   //FrontRight
-                 smthStr - smthFwd ,  //BackLeft
-                 smthStr + smthFwd,   //BackRight
-                 smthFwd);             //Center
+  if (vexRT[joyLeftTurnS] || vexRT[joyLeftTurnF]) {
+  	int str=50*vexRT[joyLeftTurnS]+90*vexRT[joyLeftTurnF];
+  	setDriveMotors(str,-str,-str,str,0);
+
+  }else if (vexRT[joyRightTurnS] || vexRT[joyRightTurnF]){
+  	int str=50*vexRT[joyRightTurnS]+90*vexRT[joyRightTurnF];
+  	setDriveMotors(-str,str,str,-str,0);
+
+  } else{
+    setDriveMotors(smthStr + smthFwd,   //FrontLeft
+                   smthStr + smthFwd,   //FrontRight
+                   smthStr - smthFwd ,  //BackLeft
+                   smthStr - smthFwd,   //BackRight
+                   smthStr);             //Center
+  }
 }
 
 void pre_auton()
