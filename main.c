@@ -59,6 +59,9 @@
 const float deadzoneJoyForward = 1.5;
 const float deadzoneJoyStrafe = 1.5;
 
+//Variables/
+int targetAngle = 0;
+
 void manualPistonTriggers () {
   SensorValue[solExtend] = vexRT[joyExtend];
   SensorValue[solDeployA] = vexRT[joyDeployA];
@@ -66,6 +69,9 @@ void manualPistonTriggers () {
   SensorValue[solDeployC] = vexRT[joyDeployC];
 }
 
+void setAngleTargetAsCurrent(){
+  targetAngle = SensorValue[gyroscope];
+}
 void setIntakeMotors (int speed) {
   motor[inChainA] = speed;
   motor[inChainB] = speed * -1; //A and B are opposite mechanically linked by axel
@@ -73,15 +79,24 @@ void setIntakeMotors (int speed) {
   motor[inChainD] = speed;      //C and D are opposite mechanically linked by axel
 }
 
+void setMotorPID(int target, tMotor motorID, int encoderID){
+  motor[motorID] = target;
+
+  if (motorID == drFrontRight){
+    writeDebugStreamLine("%i", SensorValue[gyroscope]);
+  }
+}
+
 
 void setDriveMotors(int fL, int fR, int bL, int bR,int cn) {
-  motor[drFrontRight] = fL * mInvertFrontRight;
-  motor[drFrontLeft]  = fR * mInvertFrontLeft;
-  motor[drBackLeft]   = bL * mInvertBackLeft;
-  motor[drBackRight]  = bR * mInvertBackRight;
-  motor[drCenterA]    = cn * mInvertCenterA;
-  motor[drCenterB]    = cn * mInvertCenterB * -1;
+  setMotorPID(fL * mInvertFrontRight, drFrontRight, encFrontRight);
+  setMotorPID(fR * mInvertFrontLeft, drFrontLeft, encFrontLeft);
+  setMotorPID(bL * mInvertBackLeft, drBackLeft, encBackLeft);
+  setMotorPID(bR * mInvertBackRight, drBackRight, encBackRight);
+  setMotorPID(cn * mInvertCenterA, drCenterA, encCenter);
+  setMotorPID(cn * mInvertCenterB * -1, drCenterB, encCenter * -1);
 }
+
 void driveOnControllerInput () {
     //Vertical Left Josystick - Forward/Back
     //Horizontal Right Joystick - Left/Right
@@ -116,10 +131,11 @@ void driveOnControllerInput () {
   	setDriveMotors(-str,str,str,-str,0);
 
   } else{
-    setDriveMotors(smthStr + smthFwd,   //FrontLeft
-                   smthStr + smthFwd,   //FrontRight
-                   smthStr - smthFwd ,  //BackLeft
-                   smthStr - smthFwd,   //BackRight
+    float gyroDiff = (SensorValue[gyroscope] - targetAngle) * 0.3;
+    setDriveMotors(smthStr + smthFwd - gyroDiff,   //FrontLeft
+                   smthStr + smthFwd + gyroDiff,   //FrontRight
+                   smthStr - smthFwd + gyroDiff,  //BackLeft
+                   smthStr - smthFwd - gyroDiff,   //BackRight
                    smthStr);             //Center
   }
 }
@@ -155,6 +171,7 @@ void pre_auton()
   bStopTasksBetweenModes = true;
 
 	// bDisplayCompetitionStatusOnLcd = false;
+
 }
 
 task autonomous(){
@@ -169,12 +186,26 @@ task usercontrol(){
   SensorValue[encBackLeft] = 0;
   SensorValue[encBackRight] = 0;
   SensorValue[encCenter] = 0;
+
+   //Completely clear out any previous sensor readings by setting the port to "sensorNone"
+ SensorType[gyroscope] = sensorNone;
+ wait1Msec(1000);
+ //Reconfigure Analog Port 8 as a Gyro sensor and allow time for ROBOTC to calibrate it
+ SensorType[gyroscope] = sensorGyro;
+ wait1Msec(2000);
+ 
+//Adjust SensorScale to correct the scaling for your gyro
+ //SensorScale[gyroscope] = 260;
+ //Adjust SensorFullCount to set the "rollover" point. 3600 sets the rollover point to +/-3600
+ SensorFullCount[gyroscope] = 36000;
+
   while (true) {
    driveOnControllerInput ();
    manualPistonTriggers ();
-   writeDebugStreamLine("FL: %i FR: %i BL: %i BR: %i CE: %i",SensorValue[encFrontLeft]*mInvertFrontLeft, SensorValue[encFrontRight]*mInvertFrontRight, SensorValue[encBackLeft]*mInvertBackLeft, SensorValue[encBackRight]*mInvertBackRight, SensorValue[encCenter]*mInvertCenterA);
-   wait1Msec(100);
 
-   if (vexRT[Btn8U]){deployNet();}
+   if (vexRT[Btn8U]){setAngleTargetAsCurrent();}
   }
+
+  wait1Msec(50);
+
 }
