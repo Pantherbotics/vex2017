@@ -1,10 +1,22 @@
+#pragma config(I2C_Usage, I2C1, i2cSensors)
+#pragma config(Sensor, in1,    gyroscope,      sensorGyro)
+#pragma config(Sensor, dgtl1,  solExtend,      sensorDigitalOut)
+#pragma config(Sensor, dgtl2,  solDeployA,     sensorDigitalOut)
+#pragma config(Sensor, dgtl3,  solDeployB,     sensorDigitalOut)
+#pragma config(Sensor, dgtl4,  solDeployC,     sensorDigitalOut)
+#pragma config(Sensor, I2C_1,  encFrontRight,  sensorQuadEncoderOnI2CPort,    , AutoAssign )
+#pragma config(Sensor, I2C_2,  encBackRight,   sensorQuadEncoderOnI2CPort,    , AutoAssign )
+#pragma config(Sensor, I2C_3,  encIntake,      sensorQuadEncoderOnI2CPort,    , AutoAssign )
+#pragma config(Sensor, I2C_4,  encCenter,      sensorQuadEncoderOnI2CPort,    , AutoAssign )
+#pragma config(Sensor, I2C_5,  encBackLeft,    sensorQuadEncoderOnI2CPort,    , AutoAssign )
+#pragma config(Sensor, I2C_6,  encFrontLeft,   sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Motor,  port1,           drCenterA,     tmotorVex393_HBridge, openLoop)
-#pragma config(Motor,  port2,           drFrontLeft,  tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port3,           drBackLeft,   tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port2,           drFrontLeft,   tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port3,           drBackLeft,    tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port4,           inChainA,      tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port5,           inChainC,      tmotorVex393TurboSpeed_MC29, openLoop)
-#pragma config(Motor,  port6,           drFrontRight, tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port7,           drBackRight,  tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port6,           drFrontRight,  tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port7,           drBackRight,   tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port8,           inChainB,      tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port9,           inChainD,      tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port10,          drCenterB,     tmotorVex393_HBridge, openLoop)
@@ -22,6 +34,11 @@
 #define joyLeftTurnS Btn5D
 #define joyRightTurnF Btn6U
 #define joyRightTurnS Btn6D
+
+#define joyExtend Btn7U
+#define joyDeployA Btn7R
+#define joyDeployB Btn7L
+#define joyDeployC Btn7D
 
 //------------------Motor Inverts------------------//
 // Drive
@@ -42,12 +59,20 @@
 const float deadzoneJoyForward = 1.5;
 const float deadzoneJoyStrafe = 1.5;
 
+void manualPistonTriggers () {
+  SensorValue[solExtend] = vexRT[joyExtend];
+  SensorValue[solDeployA] = vexRT[joyDeployA];
+  SensorValue[solDeployB] = vexRT[joyDeployB];
+  SensorValue[solDeployC] = vexRT[joyDeployC];
+}
+
 void setIntakeMotors (int speed) {
   motor[inChainA] = speed;
   motor[inChainB] = speed * -1; //A and B are opposite mechanically linked by axel
   motor[inChainC] = speed * -1; //A and C are opposite mechanically linked by gear
   motor[inChainD] = speed;      //C and D are opposite mechanically linked by axel
 }
+
 
 void setDriveMotors(int fL, int fR, int bL, int bR,int cn) {
   motor[drFrontRight] = fL * mInvertFrontRight;
@@ -99,6 +124,29 @@ void driveOnControllerInput () {
   }
 }
 
+void deployNet (){
+
+  SensorValue[solExtend] = 1;
+  wait1Msec(100);
+
+  //Retract alignment solenoids
+  SensorValue[solDeployA] = 1;
+  SensorValue[solDeployB] = 1;
+  SensorValue[solDeployC] = 1;
+  wait1Msec(100);
+  setDriveMotors(50,50,-50,-50,0);
+  wait1Msec(750);
+  setDriveMotors(-127,-127,-127,-127,-127);
+  wait1Msec(1000);
+  setDriveMotors(-50,-50,50,50,0);
+  wait1Msec(750);
+  setDriveMotors(-127,-127,-127,-127,-127);
+  wait1Msec(5000);
+  setDriveMotors(0,0,0,0,0);
+
+
+}
+
 void pre_auton()
 {
   // Set bStopTasksBetweenModes to false if you want to keep user created tasks
@@ -106,9 +154,6 @@ void pre_auton()
   // manage all user created tasks if set to false.
   bStopTasksBetweenModes = true;
 
-	// Set bDisplayCompetitionStatusOnLcd to false if you don't want the LCD
-	// used by the competition include file, for example, you might want
-	// to display your team name on the LCD in this function.
 	// bDisplayCompetitionStatusOnLcd = false;
 }
 
@@ -119,8 +164,17 @@ task autonomous(){
 
 task usercontrol(){
   // User control code here, inside the loop
-
+  SensorValue[encFrontLeft] = 0;
+  SensorValue[encFrontRight] = 0;
+  SensorValue[encBackLeft] = 0;
+  SensorValue[encBackRight] = 0;
+  SensorValue[encCenter] = 0;
   while (true) {
    driveOnControllerInput ();
+   manualPistonTriggers ();
+   writeDebugStreamLine("FL: %i FR: %i BL: %i BR: %i CE: %i",SensorValue[encFrontLeft]*mInvertFrontLeft, SensorValue[encFrontRight]*mInvertFrontRight, SensorValue[encBackLeft]*mInvertBackLeft, SensorValue[encBackRight]*mInvertBackRight, SensorValue[encCenter]*mInvertCenterA);
+   wait1Msec(100);
+
+   if (vexRT[Btn8U]){deployNet();}
   }
 }
