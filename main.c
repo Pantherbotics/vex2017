@@ -132,11 +132,11 @@ void driveOnControllerInput () {
 
   } else{
     float gyroDiff = (SensorValue[gyroscope] - targetAngle) * 0.3;
-    setDriveMotors(smthStr + smthFwd - gyroDiff,   //FrontLeft
-                   smthStr + smthFwd + gyroDiff,   //FrontRight
-                   smthStr - smthFwd + gyroDiff,  //BackLeft
-                   smthStr - smthFwd - gyroDiff,   //BackRight
-                   smthStr);             //Center
+    setDriveMotors(smthFwd,   //FrontLeft
+                   smthFwd,   //FrontRight
+                   smthFwd,  //BackLeft
+                   smthFwd,   //BackRight
+                   smthFwd);             //Center
   }
 }
 
@@ -187,25 +187,10 @@ task usercontrol(){
   SensorValue[encBackRight] = 0;
   SensorValue[encCenter] = 0;
 
-   //Completely clear out any previous sensor readings by setting the port to "sensorNone"
- SensorType[gyroscope] = sensorNone;
- wait1Msec(1000);
- //Reconfigure Analog Port 8 as a Gyro sensor and allow time for ROBOTC to calibrate it
- SensorType[gyroscope] = sensorGyro;
- wait1Msec(2000);
- 
-//Adjust SensorScale to correct the scaling for your gyro
- //SensorScale[gyroscope] = 260;
- //Adjust SensorFullCount to set the "rollover" point. 3600 sets the rollover point to +/-3600
- SensorFullCount[gyroscope] = 36000;
-
   while (true) {
    driveOnControllerInput ();
    manualPistonTriggers ();
 
-   if (vexRT[Btn8U]){setAngleTargetAsCurrent();}
-  }
-
   wait1Msec(50);
-
+ }
 }
