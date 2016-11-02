@@ -11,12 +11,12 @@
 #pragma config(Sensor, I2C_5,  encBackLeft,    sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Sensor, I2C_6,  encFrontLeft,   sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Motor,  port1,           drCenterA,     tmotorVex393_HBridge, openLoop)
-#pragma config(Motor,  port2,           drFrontLeft,   tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port3,           drBackLeft,    tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port2,           drFrontLeftA,   tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port3,           drBackLeftA,    tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port4,           inChainA,      tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port5,           inChainC,      tmotorVex393TurboSpeed_MC29, openLoop)
-#pragma config(Motor,  port6,           drFrontRight,  tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port7,           drBackRight,   tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port6,           drFrontRightA,  tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port7,           drBackRightA,   tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port8,           inChainB,      tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port9,           inChainD,      tmotorVex393TurboSpeed_MC29, openLoop)
 #pragma config(Motor,  port10,          drCenterB,     tmotorVex393_HBridge, openLoop)
@@ -28,84 +28,54 @@
 
 
 //----------------Joystick Mappings----------------//
-#define joyForward Ch3
-#define joyStrafe Ch1
+#define joyForward Ch1      //Forward on first stick
+#define joyRotate Ch3       //Sideways on second stick
+
 #define joyLeftTurnF Btn5U
 #define joyLeftTurnS Btn5D
 #define joyRightTurnF Btn6U
 #define joyRightTurnS Btn6D
 
-#define joyExtend Btn7U
-#define joyDeployA Btn7R
-#define joyDeployB Btn7L
-#define joyDeployC Btn7D
-
 //------------------Motor Inverts------------------//
-// Drive
+
 #define mInvertCenterA 1
 #define mInvertCenterB 1
-#define mInvertFrontLeft 1
-#define mInvertFrontRight -1
-#define mInvertBackLeft -1
-#define mInvertBackRight -1
-
-//Intake
-#define mInvertChainA 1
-#define mInvertChainB 1
-#define mInvertChainC 1
-#define mInvertChainD 1
+#define mInvertFrontLeftA 1
+#define mInvertFrontLeftB 1
+#define mInvertFrontRightA 1
+#define mInvertFrontRightB 1
+#define mInvertBackLeftA 1
+#define mInvertBackLeftB 1
+#define mInvertBackRightA 1
+#define mInvertBackRightB 1
 
 //--------------------Constants--------------------//
 const float deadzoneJoyForward = 1.5;
-const float deadzoneJoyStrafe = 1.5;
+const float deadzoneJoyRotate = 1.5; 
 
 //Variables/
 int targetAngle = 0;
+int targetDrive[5]; //0-FrontLeft;1-FrontRight;2-BackLeft;3-BackRight;4-Center
 
-void manualPistonTriggers () {
-  SensorValue[solExtend] = vexRT[joyExtend];
-  SensorValue[solDeployA] = vexRT[joyDeployA];
-  SensorValue[solDeployB] = vexRT[joyDeployB];
-  SensorValue[solDeployC] = vexRT[joyDeployC];
-}
+//Drivetrain Helper Functions
+void setFrontLeftDrive(int fl) {motor[drFrontLeftA]  = fl * mInvertFrontLeftA; motor[drFrontLeftB]  = fl * mInvertFrontLeftB  * -1;}
+void setFrontRightDrive(int fr){motor[drFrontRightA] = fr * mInvertFrontRightA;motor[drFrontRightB] = fr * mInvertFrontRightB * -1;}
+void setBackLeftDrive(int bl)  {motor[drBackLeftA]   = bl * mInvertBackLeftA;  motor[drBackLeftB]   = bl * mInvertBackLeftB   * -1;}
+void setBackRightDrive(int br) {motor[drBackRightA]  = br * mInvertBackRightA; motor[drBackRightB]  = br * mInvertBackRightB  * -1;}
+void setCenterDrive(int ce)    {motor[drFrontRightA] = ce * mInvertFrontRightA;motor[drFrontRightB] = ce * mInvertFrontRightB * -1;}
 
-void setAngleTargetAsCurrent(){
-  targetAngle = SensorValue[gyroscope];
-}
-void setIntakeMotors (int speed) {
-  motor[inChainA] = speed;
-  motor[inChainB] = speed * -1; //A and B are opposite mechanically linked by axel
-  motor[inChainC] = speed * -1; //A and C are opposite mechanically linked by gear
-  motor[inChainD] = speed;      //C and D are opposite mechanically linked by axel
-}
-
-void setMotorPID(int target, tMotor motorID, int encoderID){
-  motor[motorID] = target;
-
-  if (motorID == drFrontRight){
-    writeDebugStreamLine("%i", SensorValue[gyroscope]);
-  }
-}
-
-
-void setDriveMotors(int fL, int fR, int bL, int bR,int cn) {
-  setMotorPID(fL * mInvertFrontRight, drFrontRight, encFrontRight);
-  setMotorPID(fR * mInvertFrontLeft, drFrontLeft, encFrontLeft);
-  setMotorPID(bL * mInvertBackLeft, drBackLeft, encBackLeft);
-  setMotorPID(bR * mInvertBackRight, drBackRight, encBackRight);
-  setMotorPID(cn * mInvertCenterA, drCenterA, encCenter);
-  setMotorPID(cn * mInvertCenterB * -1, drCenterB, encCenter * -1);
-}
+//Encoder Helper Functions
+int getFrontLeftDrive() {return SensorValue[encFrontLeft]  * mInvertFrontLeftA;}
+int getFrontRightDrive(){return SensorValue[encFrontRight] * mInvertFrontRightA;}
+int getBackLeftDrive()  {return SensorValue[encBackLeft]   * mInvertBackLeftA;}
+int getBackRightDrive() {return SensorValue[encBackRight]  * mInvertBackRightA;}
+int getCenterDrive()    {return SensorValue[encCenter]     * mInvertCenterA;}
 
 void driveOnControllerInput () {
-    //Vertical Left Josystick - Forward/Back
-    //Horizontal Right Joystick - Left/Right
-    //Trigger Up - Fast Turn
-    //Trigger Down - Slow Turn
 
   //NOTE: 'Forward' on robot is oriented 'left' in respect to motors (90deg counterclockwise shift)
   int rawStr = vexRT[joyStrafe];
-  int rawFwd = -vexRT[joyForward];
+  int rawFwd = vexRT[joyRotate];
   int smthFwd = 0;
   int smthStr = 0;
 
@@ -123,12 +93,12 @@ void driveOnControllerInput () {
   }
 
   if (vexRT[joyLeftTurnS] || vexRT[joyLeftTurnF]) {
-  	int str=50*vexRT[joyLeftTurnS]+90*vexRT[joyLeftTurnF];
-  	setDriveMotors(str,-str,-str,str,0);
+    int str=50*vexRT[joyLeftTurnS]+90*vexRT[joyLeftTurnF];
+    setDriveMotors(str,-str,-str,str,0);
 
   }else if (vexRT[joyRightTurnS] || vexRT[joyRightTurnF]){
-  	int str=50*vexRT[joyRightTurnS]+90*vexRT[joyRightTurnF];
-  	setDriveMotors(-str,str,str,-str,0);
+    int str=50*vexRT[joyRightTurnS]+90*vexRT[joyRightTurnF];
+    setDriveMotors(-str,str,str,-str,0);
 
   } else{
     float gyroDiff = (SensorValue[gyroscope] - targetAngle) * 0.3;
@@ -139,30 +109,6 @@ void driveOnControllerInput () {
                    smthFwd);             //Center
   }
 }
-
-void deployNet (){
-
-  SensorValue[solExtend] = 1;
-  wait1Msec(100);
-
-  //Retract alignment solenoids
-  SensorValue[solDeployA] = 1;
-  SensorValue[solDeployB] = 1;
-  SensorValue[solDeployC] = 1;
-  wait1Msec(100);
-  setDriveMotors(50,50,-50,-50,0);
-  wait1Msec(750);
-  setDriveMotors(-127,-127,-127,-127,-127);
-  wait1Msec(1000);
-  setDriveMotors(-50,-50,50,50,0);
-  wait1Msec(750);
-  setDriveMotors(-127,-127,-127,-127,-127);
-  wait1Msec(5000);
-  setDriveMotors(0,0,0,0,0);
-
-
-}
-
 void pre_auton()
 {
   // Set bStopTasksBetweenModes to false if you want to keep user created tasks
@@ -175,22 +121,8 @@ void pre_auton()
 }
 
 task autonomous(){
-  // Remove this function call once you have "real" code.
-  AutonomousCodePlaceholderForTesting();
 }
 
 task usercontrol(){
-  // User control code here, inside the loop
-  SensorValue[encFrontLeft] = 0;
-  SensorValue[encFrontRight] = 0;
-  SensorValue[encBackLeft] = 0;
-  SensorValue[encBackRight] = 0;
-  SensorValue[encCenter] = 0;
 
-  while (true) {
-   driveOnControllerInput ();
-   manualPistonTriggers ();
-
-  wait1Msec(50);
- }
 }
