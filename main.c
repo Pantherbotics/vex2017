@@ -51,7 +51,7 @@
 
 //--------------------Constants--------------------//
 const float deadzoneJoyForward = 1.5;
-const float deadzoneJoyRotate = 1.5; 
+const float deadzoneJoyRotate = 1.5;
 
 //Variables/
 int targetAngle = 0;
@@ -70,6 +70,27 @@ int getFrontRightDrive(){return SensorValue[encFrontRight] * mInvertFrontRightA;
 int getBackLeftDrive()  {return SensorValue[encBackLeft]   * mInvertBackLeftA;}
 int getBackRightDrive() {return SensorValue[encBackRight]  * mInvertBackRightA;}
 int getCenterDrive()    {return SensorValue[encCenter]     * mInvertCenterA;}
+
+int calcMotorTarget(int currentPos, int targetPos){
+  int goal = targetPos - currentPos;
+  if (fabs(goal) < 4){goal = 0;};
+  int power = goal * 0.4;
+  return power;
+}
+
+void calcMotorValues(){
+  setFrontLeftDrive( calcMotorTarget(getFrontLeftDrive(),  targetDrive[0]));
+  setFrontRightDrive(calcMotorTarget(getFrontRightDrive(), targetDrive[1]));
+  setBackLeftDrive(  calcMotorTarget(getBackLeftDrive(),   targetDrive[2]));
+  setBackRightDrive( calcMotorTarget(getBackRightDrive(),  targetDrive[3]));
+  setCenterDrive(    calcMotorTarget(getCenterDrive(),     targetDrive[4]));
+}
+
+void resetEncoders(){targetDrive[0] = 0;targetDrive[1] = 0;targetDrive[2] = 0;targetDrive[3]=0;targetDrive[4]=0;
+  SensorValue[encFrontLeft]=0;SensorValue[encFrontRight]=0;SensorValue[encBackLeft]=0;SensorValue[encBackRight]=0;SensorValue[encCenter]=0;
+}
+
+void incrementMotorTarget(int mIdx, int increment){targetDrive[mIdx] += increment;}
 
 void driveOnControllerInput () {
 
