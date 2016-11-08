@@ -48,6 +48,12 @@
 #define mInvertBackRightA 1
 #define mInvertBackRightB 1
 
+#define eInvertFrontLeft -1
+#define eInvertFrontRight -1
+#define eInvertBackLeft 1
+#define eInvertBackRight 1
+#define eInvertCenter -1
+
 //--------------------Constants--------------------//
 const float deadzoneJoyForward = 1.5;
 const float deadzoneJoyRotate = 1.5;
@@ -56,7 +62,13 @@ const float deadzoneJoyRotate = 1.5;
 int targetAngle = 0;
 int targetDrive[5]; //0-FrontLeft;1-FrontRight;2-BackLeft;3-BackRight;4-Center
 
-void setDriveMotors(int a, int b, int c, int d, int e){}
+void incrementDriveTargets(int fl, int fr, int bl, int br, int ce){
+  targetDrive[0] = targetDrive[0] + fl;
+  targetDrive[1] = targetDrive[1] + fr;
+  targetDrive[2] = targetDrive[2] + bl;
+  targetDrive[3] = targetDrive[3] + br;
+  targetDrive[4] = targetDrive[4] + ce;
+}
 
 //Drivetrain Helper Functions
 void setFrontLeftDrive(int fl) {motor[drFrontLeftA]  = fl * mInvertFrontLeftA; motor[drFrontLeftB]  = fl * mInvertFrontLeftB  * -1;}
@@ -66,16 +78,16 @@ void setBackRightDrive(int br) {motor[drBackRightA]  = br * mInvertBackRightA; m
 void setCenterDrive(int ce)    {motor[drCenterA] = ce * mInvertCenterA;motor[drCenterB] = ce * mInvertCenterB * -1;}
 
 //Encoder Helper Functions
-int getFrontLeftDrive() {return SensorValue[encFrontLeft]  * mInvertFrontLeftA;}
-int getFrontRightDrive(){return SensorValue[encFrontRight] * mInvertFrontRightA;}
-int getBackLeftDrive()  {return SensorValue[encBackLeft]   * mInvertBackLeftA;}
-int getBackRightDrive() {return SensorValue[encBackRight]  * mInvertBackRightA;}
-int getCenterDrive()    {return SensorValue[encCenter]     * mInvertCenterA;}
+int getFrontLeftDrive() {return SensorValue[encFrontLeft]  * eInvertFrontLeft;}
+int getFrontRightDrive(){return SensorValue[encFrontRight] * eInvertFrontRight;}
+int getBackLeftDrive()  {return SensorValue[encBackLeft]   * eInvertBackLeft;}
+int getBackRightDrive() {return SensorValue[encBackRight]  * eInvertBackRight;}
+int getCenterDrive()    {return SensorValue[encCenter]     * eInvertCenter;}
 
 int calcMotorTarget(int currentPos, int targetPos){
   int goal = targetPos - currentPos;
   if (fabs(goal) < 4){goal = 0;};
-  int power = goal * 0.4;
+  int power = goal * 0.3;
   return power;
 }
 
@@ -116,19 +128,19 @@ void driveOnControllerInput () {
 
   if (vexRT[joyLeftTurnS] || vexRT[joyLeftTurnF]) {
     int str=50*vexRT[joyLeftTurnS]+90*vexRT[joyLeftTurnF];
-    setDriveMotors(str,-str,-str,str,0);
+    incrementDriveTargets(-str,-str,str,str,0);
 
   }else if (vexRT[joyRightTurnS] || vexRT[joyRightTurnF]){
     int str=50*vexRT[joyRightTurnS]+90*vexRT[joyRightTurnF];
-    setDriveMotors(-str,str,str,-str,0);
+    incrementDriveTargets(str,str,-str,-str,0);
 
   } else{
     float gyroDiff = (SensorValue[gyroscope] - targetAngle) * 0.3;
-    setDriveMotors(smthFwd,   //FrontLeft
-                   smthFwd,   //FrontRight
-                   smthFwd,  //BackLeft
-                   smthFwd,   //BackRight
-                   smthFwd);             //Center
+    incrementDriveTargets(smthFwd,   //FrontLeft
+                          smthFwd,   //FrontRight
+                          smthFwd,   //BackLeft
+                          smthFwd,   //BackRight
+                          smthFwd);  //Center
   }
 }
 void pre_auton()
@@ -146,9 +158,11 @@ task autonomous(){
 }
 
 task usercontrol(){
+  resetEncoders();
   while (true){
   	wait1Msec(50);
-  	//calcMotorValues();
+    driveOnControllerInput();
+  	calcMotorValues();
   	writeDebugStreamLine("FL%i, FR%i, BL%i, BR%i, CE%i", getFrontLeftDrive(), getFrontRightDrive(), getBackLeftDrive(), getBackRightDrive(), getCenterDrive())
   }
 }
