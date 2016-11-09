@@ -55,8 +55,13 @@
 #define eInvertCenter -1
 
 //----------------------------Constants----------------------------//
-const float deadzoneJoyForward = 1.5;
-const float deadzoneJoyRotate = 1.5;
+const float deadzoneJoyForward = 1.5;    //Forward joystick deadzone
+const float deadzoneJoyRotate = 1.5;     //Rotation joystick deadzone
+
+const int incrementSlowTurn = 50;        //Button turn slow speed
+const int incrementFastTurn = 90;        //Button turn fast speed
+const int incrementForward  = 127;
+const int incrementRotate = 127;
 
 //----------------------------Variables----------------------------//
 int targetAngle = 0;   //angle (in degrees) for gyroscope code to maintain
@@ -126,39 +131,41 @@ void calcMotorValues(){
 //Get joystick inputs, calculate encoder offset, and 
 void driveOnControllerInput () {
   //NOTE: 'Forward' on robot is oriented 'left' in respect to drivetrain (90deg counterclockwise shift)
-  int rawStr = vexRT[joyForward];
-  int rawFwd = vexRT[joyRotate];
-  int smthFwd = 0;
-  int smthStr = 0;
+  int rawFwd = vexRT[joyForward];
+  int rawRot = vexRT[joyRotate];
+  float smthFwd = 0.0;
+  float smthRot = 0.0;
 
   //Deadzone calculations
-  if (rawStr > deadzoneJoyRotate || rawStr < -deadzoneJoyRotate){
-    smthStr = rawStr;
-  }else{
-    smthStr = 0;
-  }
-
-  if (rawFwd > deadzoneJoyForward || rawFwd < -deadzoneJoyForward){
-    smthFwd = rawFwd;
+  if (fabs(rawFwd) > deadzoneJoyForward){
+    smthFwd = rawFwd/127;
   }else{
     smthFwd = 0;
   }
 
+  if (fabs(rawRot) > deadzoneJoyRotate){
+    smthRot = rawRot/127;
+  }else{
+    smthRot = 0;
+  }
+
   if (vexRT[joyLeftTurnS] || vexRT[joyLeftTurnF]) {
-    int str=50*vexRT[joyLeftTurnS]+90*vexRT[joyLeftTurnF];
+    int str=(incrementSlowTurn*vexRT[joyLeftTurnS]) + (incrementFastTurn*vexRT[joyLeftTurnF]);
     incrementDriveTargets(-str,-str,str,str,0);
 
   }else if (vexRT[joyRightTurnS] || vexRT[joyRightTurnF]){
-    int str=50*vexRT[joyRightTurnS]+90*vexRT[joyRightTurnF];
+    int str=(incrementSlowTurn*vexRT[joyRightTurnS]) + (incrementFastTurn*vexRT[joyRightTurnF)];
     incrementDriveTargets(str,str,-str,-str,0);
 
   } else{
     float gyroDiff = (SensorValue[gyroscope] - targetAngle) * 0.3;
-    incrementDriveTargets(smthFwd,   //FrontLeft
-                          smthFwd,   //FrontRight
-                          smthFwd,   //BackLeft
-                          smthFwd,   //BackRight
-                          smthFwd);  //Center
+    float incF = smthFwd * incrementForward;
+    float incR = smthRot * incrementRotate;
+    incrementDriveTargets(incF + incR,   //FrontLeft
+                          incF + incR,   //FrontRight
+                          incF - incR,   //BackLeft
+                          incF - incR,   //BackRight
+                          incF);  //Center
   }
 }
 
