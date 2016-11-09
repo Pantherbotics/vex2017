@@ -27,8 +27,8 @@
 #include "Vex_Competition_Includes.c"
 
 //------------------------Joystick Mappings------------------------//
-#define joyForward Ch1      //Forward on first stick
-#define joyRotate Ch3       //Sideways on second stick
+#define joyForward Ch3      //Forward on first stick
+#define joyRotate Ch1       //Sideways on second stick
 
 #define joyLeftTurnF Btn5U
 #define joyLeftTurnS Btn5D
@@ -131,14 +131,14 @@ void calcMotorValues(){
 void driveTargetsWithGyroCorrection(int fl, int fr, int bl, int br, int ce){
   int gyroError = (SensorValue[gyroscope] - targetAngle);
   float gyCr = (gyroError * 0.9) + (gyroError * 0.6);
-  incrementDriveTargets(fl + gyCr, 
-                        fr + gyCr, 
-                        bl - gyCr, 
-                        br - gyCr, 
+  incrementDriveTargets(fl + gyCr,
+                        fr + gyCr,
+                        bl - gyCr,
+                        br - gyCr,
                         ce);
 }
 
-//Get joystick inputs, calculate encoder offset, and 
+//Get joystick inputs, calculate encoder offset, and
 void driveOnControllerInput () {
   //NOTE: 'Forward' on robot is oriented 'left' in respect to drivetrain (90deg counterclockwise shift)
   int rawFwd = vexRT[joyForward];
@@ -182,7 +182,7 @@ void gyroInit(){
   //Completely clear out any previous sensor readings by setting the port to "sensorNone"
   SensorType[gyroscope] = sensorNone;
   wait1Msec(1000);
-  //Reconfigure port as a gyroscope and allow time for calibration. 
+  //Reconfigure port as a gyroscope and allow time for calibration.
   SensorType[gyroscope] = sensorGyro;
   wait1Msec(2000);
  //Set Roll-over point to +/- 100 full rotations
