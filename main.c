@@ -128,6 +128,16 @@ void calcMotorValues(){
   setCenterDrive(calcMotorTarget(getCenterDrive(),4));
 }
 
+void driveTargetsWithGyroCorrection(int fl, int fr, int bl, int br, int ce){
+  int gyroError = (SensorValue[gyroscope] - targetAngle);
+  float gyCr = (gyroError * 0.9) + (gyroError * 0.6)
+  incrementDriveTargets(fl + gyCr, 
+                        fr + gyCr, 
+                        bl - gyCr, 
+                        br - gyCr, 
+                        ce);
+}
+
 //Get joystick inputs, calculate encoder offset, and 
 void driveOnControllerInput () {
   //NOTE: 'Forward' on robot is oriented 'left' in respect to drivetrain (90deg counterclockwise shift)
@@ -158,7 +168,6 @@ void driveOnControllerInput () {
     incrementDriveTargets(str,str,-str,-str,0);
 
   } else{
-    float gyroDiff = (SensorValue[gyroscope] - targetAngle) * 0.3;
     float incF = smthFwd * incrementForward;
     float incR = smthRot * incrementRotate;
     incrementDriveTargets(incF + incR,   //FrontLeft
