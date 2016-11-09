@@ -130,7 +130,7 @@ void calcMotorValues(){
 
 void driveTargetsWithGyroCorrection(int fl, int fr, int bl, int br, int ce){
   int gyroError = (SensorValue[gyroscope] - targetAngle);
-  float gyCr = (gyroError * 0.9) + (gyroError * 0.6)
+  float gyCr = (gyroError * 0.9) + (gyroError * 0.6);
   incrementDriveTargets(fl + gyCr, 
                         fr + gyCr, 
                         bl - gyCr, 
@@ -164,7 +164,7 @@ void driveOnControllerInput () {
     incrementDriveTargets(-str,-str,str,str,0);
 
   }else if (vexRT[joyRightTurnS] || vexRT[joyRightTurnF]){
-    int str=(incrementSlowTurn*vexRT[joyRightTurnS]) + (incrementFastTurn*vexRT[joyRightTurnF)];
+    int str=(incrementSlowTurn*vexRT[joyRightTurnS]) + (incrementFastTurn*vexRT[joyRightTurnF]);
     incrementDriveTargets(str,str,-str,-str,0);
 
   } else{
@@ -212,6 +212,6 @@ task usercontrol(){
   	wait1Msec(50);
     driveOnControllerInput();
   	calcMotorValues();
-  	writeDebugStreamLine("FL%i, FR%i, BL%i, BR%i, CE%i", getFrontLeftDrive(), getFrontRightDrive(), getBackLeftDrive(), getBackRightDrive(), getCenterDrive())
+  	writeDebugStreamLine("FL%i, FR%i, BL%i, BR%i, CE%i", getFrontLeftDrive(), getFrontRightDrive(), getBackLeftDrive(), getBackRightDrive(), getCenterDrive());
   }
 }
