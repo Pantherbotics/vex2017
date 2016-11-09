@@ -64,11 +64,11 @@ int targetDrive[5]; //0-FrontLeft; 1-FrontRight; 2-BackLeft; 3-BackRight; 4-Cent
 int errorDrive[5]
 
 void incrementDriveTargets(int fl, int fr, int bl, int br, int ce){
-  targetDrive[0] = targetDrive[0] + fl;
-  targetDrive[1] = targetDrive[1] + fr;
-  targetDrive[2] = targetDrive[2] + bl;
-  targetDrive[3] = targetDrive[3] + br;
-  targetDrive[4] = targetDrive[4] + ce;
+  incrementMotorTarget(0,fl);
+  incrementMotorTarget(1,fr);
+  incrementMotorTarget(2,bl);
+  incrementMotorTarget(3,br);
+  incrementMotorTarget(4,ce);
 }
 
 //Drivetrain Helper Functions
