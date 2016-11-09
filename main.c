@@ -178,6 +178,17 @@ void driveOnControllerInput () {
   }
 }
 
+void gyroInit(){
+  //Completely clear out any previous sensor readings by setting the port to "sensorNone"
+  SensorType[gyroscope] = sensorNone;
+  wait1Msec(1000);
+  //Reconfigure port as a gyroscope and allow time for calibration. 
+  SensorType[gyroscope] = sensorGyro;
+  wait1Msec(2000);
+ //Set Roll-over point to +/- 100 full rotations
+ SensorFullCount[gyroscope] = 36000;
+}
+
 //Pre-auton init
 void pre_auton(){
   // Set bStopTasksBetweenModes to false if you want to keep user created tasks
@@ -196,6 +207,7 @@ task autonomous(){
 //Manual Control
 task usercontrol(){
   resetEncoders();
+  gyroInit();
   while (true){
   	wait1Msec(50);
     driveOnControllerInput();
