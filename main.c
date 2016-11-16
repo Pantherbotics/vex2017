@@ -36,7 +36,7 @@
 #define joyRightTurnS Btn6D
 
 //--------------------------Motor Inverts--------------------------//
-#define mInvertCenterA -1
+#define mInvertCenterA 1
 #define mInvertCenterB -1
 #define mInvertFrontLeftA 1
 #define mInvertFrontLeftB 1
@@ -55,13 +55,13 @@
 #define eInvertCenter -1
 
 //----------------------------Constants----------------------------//
-const float deadzoneJoyForward = 1.5;    //Forward joystick deadzone
-const float deadzoneJoyRotate = 1.5;     //Rotation joystick deadzone
+const float deadzoneJoyForward = 3.5;    //Forward joystick deadzone
+const float deadzoneJoyRotate = 3.5;     //Rotation joystick deadzone
 
 const int incrementSlowTurn = 50;        //Button turn slow speed
 const int incrementFastTurn = 90;        //Button turn fast speed
-const int incrementForward  = 127;
-const int incrementRotate = 127;
+const int incrementForward  = 60;
+const int incrementRotate = 60;
 
 //----------------------------Variables----------------------------//
 int targetAngle = 0;   //angle (in degrees) for gyroscope code to maintain
@@ -116,6 +116,7 @@ int calcMotorTarget(int currentPos, int idx){
 
   if (fabs(error) < 4){error = 0;};
   int power = (errorDiff* 0.9) + (error * 0.6);
+  if (fabs(power) < 20){error = 0;};
   return power;
 }
 
