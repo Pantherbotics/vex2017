@@ -330,6 +330,6 @@ task usercontrol(){
     driveTank();
     if(vexRT[Btn7U]){deployPreTrig = true};
     if(!vexRT[Btn7U] && deployPreTrig){deployPreTrig = false;deploySw();};
-    if(vexRT[Btn8U]){auto();};
+    if(vexRT[Btn8D]){auto();};
   }
 }
