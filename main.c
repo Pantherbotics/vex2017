@@ -147,6 +147,18 @@ int calcMotorTarget(int currentPos, int idx){
   return power;
 }
 
+void driveTank(int left, int right){
+  int lPower = calcMotorTarget(getFrontLeftDrive(),0);
+  int rPower = calcMotorTarget(getBackLeftDrive(),2);
+  setFrontLeftDrive(lPower);
+  setFrontRightDrive(lPower);
+  setBackLeftDrive(rPower);
+  setBackRightDrive(rPower);
+  if((lPower/fabs(lPower))==(rPower/fabs(rPower))){
+    setCenterDrive(lPower);
+  }
+}
+
 //Helper function to calculate PID and set motor power for all drive motors
 void calcMotorValues(){
   setFrontLeftDrive(calcMotorTarget(getFrontLeftDrive(),0));
@@ -257,6 +269,7 @@ void pre_auton(){
 
 //Autonomous control
 task autonomous(){
+
 }
 
 //Manual Control
@@ -266,7 +279,7 @@ task usercontrol(){
   while (true){
   	wait1Msec(50);
     driveOnControllerInput();
-    calcMotorValues();
+    driveTank();
     if(vexRT[Btn7U]){deploySw();};
   }
 }
