@@ -75,6 +75,7 @@ float incF = 0;
 float incR = 0;
 
 bool deploy = false;
+bool deployPreTrig = false;
 
 //-------------------------Helper Functions-------------------------//
 
@@ -327,7 +328,8 @@ task usercontrol(){
   	wait1Msec(50);
     driveOnControllerInput();
     driveTank();
+    if(vexRT[Btn7U]){deployPreTrig = true};
+    if(!vexRT[Btn7U] && deployPreTrig){deployPreTrig = false;deploySw();};
     if(vexRT[Btn8U]){auto();};
-    if(vexRT[Btn7U]){deploySw();};
   }
 }
