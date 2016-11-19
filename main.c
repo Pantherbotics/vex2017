@@ -74,7 +74,7 @@ int errorDrive[5];     //Accumulated error for all five drivetrain encoders
 float incF = 0;
 float incR = 0;
 
-bool deploy = false
+bool deploy = false;
 
 //-------------------------Helper Functions-------------------------//
 
@@ -159,6 +159,7 @@ void driveTank(){
   setFrontRightDrive(lPower);
   setBackLeftDrive(rPower);
   setBackRightDrive(rPower);
+  if (lPower==0 || rPower==0){return;};
   if((lPower/fabs(lPower))==(rPower/fabs(rPower))){
     setCenterDrive(lPower);
   }
@@ -211,13 +212,13 @@ void driveOnControllerInput () {
     int str=(incrementSlowTurn*vexRT[joyLeftTurnS]) + (incrementFastTurn*vexRT[joyLeftTurnF]);
     //incrementDriveTargets(-str,-str,str,str,0);
     fakeRotate(100);
-    setGyroTargetToPosition()
+    setGyroTargetToPosition();
 
   }else if (vexRT[joyRightTurnS] || vexRT[joyRightTurnF]){
     int str=(incrementSlowTurn*vexRT[joyRightTurnS]) + (incrementFastTurn*vexRT[joyRightTurnF]);
     //incrementDriveTargets(str,str,-str,-str,0);
     fakeRotate(-100);
-    setGyroTargetToPosition()
+    setGyroTargetToPosition();
 
   } else{
     incF = smthFwd * incrementForward;
@@ -282,6 +283,7 @@ task usercontrol(){
   	wait1Msec(50);
     driveOnControllerInput();
     driveTank();
+    if(vexRT[Btn8U]){auto();};
     if(vexRT[Btn7U]){deploySw();};
   }
 }
