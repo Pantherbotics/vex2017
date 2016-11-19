@@ -152,7 +152,7 @@ int calcMotorTarget(int currentPos, int idx){
   return power;
 }
 
-void driveTank(int left, int right){
+void driveTank(){
   int lPower = calcMotorTarget(getFrontLeftDrive(),0);
   int rPower = calcMotorTarget(getBackLeftDrive(),2);
   setFrontLeftDrive(lPower);
