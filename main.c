@@ -153,15 +153,17 @@ int calcMotorTarget(int currentPos, int idx){
 }
 
 void driveTank(){
-  int lPower = calcMotorTarget(getFrontLeftDrive(),0);
-  int rPower = calcMotorTarget(getBackLeftDrive(),2);
+  int lPower = calcMotorTarget(((getFrontLeftDrive()+getFrontRightDrive())/2),0);
+  int rPower = calcMotorTarget(((getBackLeftDrive()+getBackRightDrive())/2),2);
   setFrontLeftDrive(lPower);
   setFrontRightDrive(lPower);
   setBackLeftDrive(rPower);
   setBackRightDrive(rPower);
-  if (lPower==0 || rPower==0){return;};
+  if (lPower==0 || rPower==0){setCenterDrive(0);return;};
   if((lPower/fabs(lPower))==(rPower/fabs(rPower))){
     setCenterDrive(lPower);
+  }else{
+    setCenterDrive(0);
   }
 }
 
