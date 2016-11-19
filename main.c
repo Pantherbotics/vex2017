@@ -243,13 +243,6 @@ void gyroInit(){
  SensorFullCount[gyroscope] = 36000;
 }
 
-void auto(){
-	incrementDriveTargets(1500,1500,1500,1500,1500);
-	calcMotorValues();
-  while(fabs(errorDrive[0]) > 10){
-    calcMotorValues();
-  }
-}
 
 void deploySw(){
 
@@ -259,6 +252,55 @@ void deploySw(){
   SensorValue[solDeployC] = !deploy;
   deploy = !deploy;
   wait1Msec(100);
+}
+
+
+void auto(){
+  //forward
+	incrementTank(930,930);
+	 driveTank();
+  while(fabs(errorDrive[0]) > 50){
+    driveTank();
+  }
+
+  //rotate
+  incrementTank(650,-650);
+  driveTank();
+  while(fabs(errorDrive[0]) > 50){
+    driveTank();
+  }
+
+   //right side
+  incrementTank(-830,-830);
+  driveTank();
+  while(fabs(errorDrive[0]) > 50){
+    driveTank();
+  }
+
+  //deploy
+  deploySw();
+  wait1Msec(500);
+  
+  //drive
+  incrementTank(400,400);
+  driveTank();
+  while(fabs(errorDrive[0]) > 50){
+    driveTank();
+  }
+
+  //rotate back
+  incrementTank(-250,250);
+  driveTank();
+  while(fabs(errorDrive[0]) > 50){
+    driveTank();
+  }
+  
+  //drive again
+  incrementTank(1800,1800);
+  driveTank();
+  while(fabs(errorDrive[0]) > 50){
+    driveTank();
+  }
 }
 
 //Pre-auton init
