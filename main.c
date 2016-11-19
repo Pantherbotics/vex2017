@@ -90,6 +90,11 @@ void incrementDriveTargets(int fl, int fr, int bl, int br, int ce){
   incrementMotorTarget(4,ce);
 }
 
+void incrementTank(int left, int right){
+  incrementMotorTarget(0,left);
+  incrementMotorTarget(2,right);
+}
+
 //Reset all encoder targets, encoder values, and error values to zero
 void resetEncoders(){
   targetDrive[0]=0;targetDrive[1]=0;targetDrive[2]=0;targetDrive[3]=0;targetDrive[4]=0;
@@ -219,11 +224,8 @@ void driveOnControllerInput () {
     incR = smthRot * incrementRotate;
 
     if (incR > 0){setGyroTargetToPosition();}
-    driveTargetsWithGyroCorrection(incF + incR,   //FrontLeft
-                                   incF + incR,   //FrontRight
-                                   incF - incR,   //BackLeft
-                                   incF - incR,   //BackRight
-                                   incF);  //Center
+    incrementTank(incF + incR,   //Front
+                  incF - incR);  //Back
   }
 }
 
