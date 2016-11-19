@@ -30,15 +30,15 @@
 #define joyForward Ch3      //Forward on first stick
 #define joyRotate Ch1       //Sideways on second stick
 
-#define joyLeftTurnF Btn5U
-#define joyLeftTurnS Btn5D
-#define joyRightTurnF Btn6U
-#define joyRightTurnS Btn6D
+#define joyLeftTurnF Btn6U
+#define joyLeftTurnS Btn6D
+#define joyRightTurnF Btn5U
+#define joyRightTurnS Btn5D
 
 //--------------------------Motor Inverts--------------------------//
 #define mInvertCenterA 1
 #define mInvertCenterB -1
-#define mInvertFrontLeftA 1
+#define mInvertFrontLeftA -1
 #define mInvertFrontLeftB 1
 #define mInvertFrontRightA -1
 #define mInvertFrontRightB -1
@@ -55,20 +55,26 @@
 #define eInvertCenter -1
 
 //----------------------------Constants----------------------------//
-const float deadzoneJoyForward = 3.5;    //Forward joystick deadzone
-const float deadzoneJoyRotate = 3.5;     //Rotation joystick deadzone
+const float deadzoneJoyForward = 10.5;    //Forward joystick deadzone
+const float deadzoneJoyRotate = 10.5;     //Rotation joystick deadzone
 
-const int incrementSlowTurn = 50;        //Button turn slow speed
-const int incrementFastTurn = 90;        //Button turn fast speed
-const int incrementForward  = 60;
-const int incrementRotate = 60;
+const float incrementSlowTurn = 45;        //Button turn slow speed
+const float incrementFastTurn = 55;        //Button turn fast speed
+const float incrementForward  = 60;
+const float incrementRotate = 60;
 
 //----------------------------Variables----------------------------//
 int targetAngle = 0;   //angle (in degrees) for gyroscope code to maintain
+int lastAngleError = 0;
 
 //0-FrontLeft; 1-FrontRight; 2-BackLeft; 3-BackRight; 4-Center
 int targetDrive[5];    //Target encoder positions for all five drivetrain encoders
 int errorDrive[5];     //Accumulated error for all five drivetrain encoders
+
+float incF = 0;
+float incR = 0;
+
+bool deploy = false
 
 //-------------------------Helper Functions-------------------------//
 
@@ -92,11 +98,11 @@ void resetEncoders(){
 }
 
 //Drivetrain Helper Functions
-void setFrontLeftDrive(int fl) {motor[drFrontLeftA]  = fl * mInvertFrontLeftA; motor[drFrontLeftB]  = fl * mInvertFrontLeftB  * -1;}
-void setFrontRightDrive(int fr){motor[drFrontRightA] = fr * mInvertFrontRightA;motor[drFrontRightB] = fr * mInvertFrontRightB * -1;}
-void setBackLeftDrive(int bl)  {motor[drBackLeftA]   = bl * mInvertBackLeftA;  motor[drBackLeftB]   = bl * mInvertBackLeftB   * -1;}
-void setBackRightDrive(int br) {motor[drBackRightA]  = br * mInvertBackRightA; motor[drBackRightB]  = br * mInvertBackRightB  * -1;}
-void setCenterDrive(int ce)    {motor[drCenterA] = ce * mInvertCenterA;motor[drCenterB] = ce * mInvertCenterB * -1;}
+void setFrontLeftDrive(int fl) {if(fl==0){return;};motor[drFrontLeftA]  = fl * mInvertFrontLeftA; motor[drFrontLeftB]  = fl * mInvertFrontLeftB  * -1;}
+void setFrontRightDrive(int fr){if(fr==0){return;};motor[drFrontRightA] = fr * mInvertFrontRightA;motor[drFrontRightB] = fr * mInvertFrontRightB * -1;}
+void setBackLeftDrive(int bl)  {if(bl==0){return;};motor[drBackLeftA]   = bl * mInvertBackLeftA;  motor[drBackLeftB]   = bl * mInvertBackLeftB   * -1;}
+void setBackRightDrive(int br) {if(br==0){return;};motor[drBackRightA]  = br * mInvertBackRightA; motor[drBackRightB]  = br * mInvertBackRightB  * -1;}
+void setCenterDrive(int ce)    {if(ce==0){return;};motor[drCenterA] = ce * mInvertCenterA;motor[drCenterB] = ce * mInvertCenterB * -1;}
 
 //Encoder Helper Functions
 int getFrontLeftDrive() {return SensorValue[encFrontLeft]  * eInvertFrontLeft;}
@@ -105,7 +111,28 @@ int getBackLeftDrive()  {return SensorValue[encBackLeft]   * eInvertBackLeft;}
 int getBackRightDrive() {return SensorValue[encBackRight]  * eInvertBackRight;}
 int getCenterDrive()    {return SensorValue[encCenter]     * eInvertCenter;}
 
+//Nullify encoder error
+void softResetError(){
+  targetDrive[0]=getFrontLeftDrive();
+  targetDrive[1]=getFrontRightDrive();
+  targetDrive[2]=getBackLeftDrive();
+  targetDrive[3]=getBackRightDrive();
+  targetDrive[4]=getCenterDrive();
+}
+
 //-------------------------Program Functions-------------------------//
+void fakeRotate(int power){
+  setFrontLeftDrive(-power);
+  setFrontRightDrive(-power);
+  setBackLeftDrive(power);
+  setBackRightDrive(power);
+  softResetError();
+}
+
+
+void setGyroTargetToPosition(){
+  targetAngle = SensorValue[gyroscope];
+}
 
 //Calculate motor power based on encoder error (PID)
 int calcMotorTarget(int currentPos, int idx){
@@ -115,7 +142,7 @@ int calcMotorTarget(int currentPos, int idx){
   int errorDiff = error - lastError;
 
   if (fabs(error) < 4){error = 0;};
-  int power = (errorDiff* 0.9) + (error * 0.6);
+  int power = (errorDiff* 0.6) + (error * 0.4);
   if (fabs(power) < 20){error = 0;};
   return power;
 }
@@ -131,11 +158,14 @@ void calcMotorValues(){
 
 void driveTargetsWithGyroCorrection(int fl, int fr, int bl, int br, int ce){
   int gyroError = (SensorValue[gyroscope] - targetAngle);
-  float gyCr = (gyroError * 0.9) + (gyroError * 0.6);
-  incrementDriveTargets(fl + gyCr,
-                        fr + gyCr,
-                        bl - gyCr,
-                        br - gyCr,
+  float gyCr = (gyroError * 0.5);
+  if (fabs(ce) <= 10) {gyCr = 0;} //Nullify error if we're not driving forward
+  int lastAngleError = gyroError;
+  gyCr = 0;
+  incrementDriveTargets(fl - gyCr,
+                        fr - gyCr,
+                        bl + gyCr,
+                        br + gyCr,
                         ce);
 }
 
@@ -149,33 +179,39 @@ void driveOnControllerInput () {
 
   //Deadzone calculations
   if (fabs(rawFwd) > deadzoneJoyForward){
-    smthFwd = rawFwd/127;
+    smthFwd = rawFwd/127.0;
   }else{
     smthFwd = 0;
   }
 
   if (fabs(rawRot) > deadzoneJoyRotate){
-    smthRot = rawRot/127;
+    smthRot = rawRot/127.0;
   }else{
     smthRot = 0;
   }
 
   if (vexRT[joyLeftTurnS] || vexRT[joyLeftTurnF]) {
     int str=(incrementSlowTurn*vexRT[joyLeftTurnS]) + (incrementFastTurn*vexRT[joyLeftTurnF]);
-    incrementDriveTargets(-str,-str,str,str,0);
+    //incrementDriveTargets(-str,-str,str,str,0);
+    fakeRotate(100);
+    setGyroTargetToPosition()
 
   }else if (vexRT[joyRightTurnS] || vexRT[joyRightTurnF]){
     int str=(incrementSlowTurn*vexRT[joyRightTurnS]) + (incrementFastTurn*vexRT[joyRightTurnF]);
-    incrementDriveTargets(str,str,-str,-str,0);
+    //incrementDriveTargets(str,str,-str,-str,0);
+    fakeRotate(-100);
+    setGyroTargetToPosition()
 
   } else{
-    float incF = smthFwd * incrementForward;
-    float incR = smthRot * incrementRotate;
-    incrementDriveTargets(incF + incR,   //FrontLeft
-                          incF + incR,   //FrontRight
-                          incF - incR,   //BackLeft
-                          incF - incR,   //BackRight
-                          incF);  //Center
+    incF = smthFwd * incrementForward;
+    incR = smthRot * incrementRotate;
+
+    if (incR > 0){setGyroTargetToPosition();}
+    driveTargetsWithGyroCorrection(incF + incR,   //FrontLeft
+                                   incF + incR,   //FrontRight
+                                   incF - incR,   //BackLeft
+                                   incF - incR,   //BackRight
+                                   incF);  //Center
   }
 }
 
@@ -188,6 +224,24 @@ void gyroInit(){
   wait1Msec(2000);
  //Set Roll-over point to +/- 100 full rotations
  SensorFullCount[gyroscope] = 36000;
+}
+
+void auto(){
+	incrementDriveTargets(1500,1500,1500,1500,1500);
+	calcMotorValues();
+  while(fabs(errorDrive[0]) > 10){
+    calcMotorValues();
+  }
+}
+
+void deploySw(){
+
+  SensorValue[solExtend] = !deploy;
+  SensorValue[solDeployA] = !deploy;
+  SensorValue[solDeployB] = !deploy;
+  SensorValue[solDeployC] = !deploy;
+  deploy = !deploy;
+  wait1Msec(100);
 }
 
 //Pre-auton init
@@ -212,7 +266,7 @@ task usercontrol(){
   while (true){
   	wait1Msec(50);
     driveOnControllerInput();
-  	calcMotorValues();
-  	writeDebugStreamLine("FL%i, FR%i, BL%i, BR%i, CE%i", getFrontLeftDrive(), getFrontRightDrive(), getBackLeftDrive(), getBackRightDrive(), getCenterDrive());
+    calcMotorValues();
+    if(vexRT[Btn7U]){deploySw();};
   }
 }
