@@ -257,12 +257,13 @@ void pre_auton(){
 
 //Autonomous control
 task autonomous(){
+  resetEncoders();
+  gyroInit();
 }
 
 //Manual Control
 task usercontrol(){
   resetEncoders();
-  gyroInit();
   while (true){
   	wait1Msec(50);
     driveOnControllerInput();
