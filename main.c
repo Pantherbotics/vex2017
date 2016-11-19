@@ -278,8 +278,8 @@ void auto(){
     driveTank();
   }
 
-  //deploy
-  deploySw();
+  //deploy -- COMMENTED OUT FOR COMPETITION || RE-ENABLE WHEN DEPLOY WORKS
+  //deploySw();
   wait1Msec(500);
   
   //drive
@@ -297,7 +297,7 @@ void auto(){
   }
   
   //drive again
-  incrementTank(1800,1800);
+  incrementTank(2400,2400);
   driveTank();
   while(fabs(errorDrive[0]) > 50){
     driveTank();
@@ -319,6 +319,7 @@ void pre_auton(){
 task autonomous(){
   resetEncoders();
   gyroInit();
+  auto();
 }
 
 //Manual Control
